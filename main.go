@@ -1,48 +1,45 @@
+// main.go
 package main
 
 import (
-	"embed"
 	"fmt"
+	"log"
 	"os"
-	"runtime"
+	"os/exec"
+	"path/filepath"
 )
 
-//go:embed assets/*
-var files embed.FS
-
 func main() {
-	path := "temp"
-	err := os.Mkdir(path, 0755)
+	// listExiftoolFiles()
+
+	tempDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("Failed to create directory: %v\n", err)
-		return
+		log.Fatalf("Failed to get user home directory: %v", err)
 	}
+	tempDir = filepath.Join(tempDir, "Desktop", "temp")
 
-	// defer os.RemoveAll(path)
-
-	var fileName string
-
-	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		fileName = "assets/nix.txt"
-	} else if runtime.GOOS == "windows" {
-		fileName = "assets/windows.txt"
-	} else {
-		err = fmt.Errorf("Unsupported OS: %s", runtime.GOOS)
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	file, err := files.ReadFile(fileName)
+	err = os.MkdirAll(tempDir, 0755)
 	if err != nil {
-		fmt.Printf("Failed to read embedded file: %v\n", err)
-		return
+		log.Fatalf("Failed to create temporary directory: %v", err)
 	}
+	defer os.RemoveAll(tempDir)
 
-	err = os.WriteFile(fmt.Sprintf("%s/os_file.txt", path), file, 0644)
+	exiftoolPath, err := extractExiftool(tempDir)
 	if err != nil {
-		fmt.Printf("Failed to write file: %v\n", err)
-		return
+		log.Fatalf("Failed to extract exiftool: %v", err)
 	}
 
-	fmt.Println("File written successfully")
+	imagePath := "image.ARW" // Replace with your image path
+
+	cmd := exec.Command(exiftoolPath, "-Make", "-Model", imagePath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("Failed to execute exiftool: %v, output: %s", err, output)
+	}
+
+	fmt.Println(string(output))
+}
+
+func extractExiftool(tempDir string) (string, error) {
+	return extractPlatformSpecificExiftool(tempDir) // Calls platform specific file.
 }
