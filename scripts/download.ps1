@@ -1,0 +1,42 @@
+# Create necessary directories
+New-Item -ItemType Directory -Force -Path downloads
+New-Item -ItemType Directory -Force -Path assets/windows
+
+# Get the current ExifTool version
+Write-Host "Fetching current ExifTool version..."
+$VERSION = (Invoke-WebRequest -Uri "https://exiftool.org/ver.txt" -UseBasicParsing).Content.Trim()
+if (-not $VERSION) {
+    Write-Host "Failed to retrieve version information"
+    exit 1
+}
+Write-Host "Current ExifTool version: $VERSION"
+
+# Download the 64-bit zip version (WINDOWS)
+$WINDOWS_URL = "https://exiftool.org/exiftool-${VERSION}_64.zip"
+$WINDOWS_FILE = "downloads/exiftool-${VERSION}_64.zip"
+Write-Host "Downloading WINDOWS version from $WINDOWS_URL..."
+try {
+    Invoke-WebRequest -Uri $WINDOWS_URL -OutFile $WINDOWS_FILE -UseBasicParsing
+    Write-Host "Successfully downloaded WINDOWS version to $WINDOWS_FILE"
+} catch {
+    Write-Host "Failed to download WINDOWS version from $WINDOWS_URL"
+    exit 1
+}
+
+# Verify the file exists and has non-zero size before extraction
+if (-not (Test-Path $WINDOWS_FILE) -or (Get-Item $WINDOWS_FILE).Length -eq 0) {
+    Write-Host "WINDOWS file is empty or does not exist"
+    exit 1
+}
+
+# Extract the WINDOWS (zip) version to assets/windows with suppressed output
+Write-Host "Extracting WINDOWS version to assets/windows..."
+try {
+    Expand-Archive -Path $WINDOWS_FILE -DestinationPath assets/windows -Force
+    Write-Host "Successfully extracted WINDOWS version to assets/windows"
+} catch {
+    Write-Host "Failed to extract WINDOWS version"
+    exit 1
+}
+
+Write-Host "WINDOWS download and extraction completed successfully!"
