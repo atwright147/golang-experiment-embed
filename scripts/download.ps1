@@ -1,6 +1,6 @@
 # Create necessary directories
-New-Item -ItemType Directory -Force -Path downloads
-New-Item -ItemType Directory -Force -Path assets/windows
+$null = New-Item -ItemType Directory -Force -Path downloads
+$null = New-Item -ItemType Directory -Force -Path assets/windows
 
 # Get the current ExifTool version
 Write-Host "Fetching current ExifTool version..."
