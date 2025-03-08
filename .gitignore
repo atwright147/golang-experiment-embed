@@ -1,5 +1,9 @@
 .DS_Store
+
 /temp/
 /assets/
+/downloads/
+
+assets.zip
 golang-embed-exiftool
 golang-embed-exiftool.exe
