@@ -32,9 +32,9 @@ if [ ! -s "$NIX_FILE" ]; then
 	exit 1
 fi
 
-# Extract the NIX (tar.gz) version to assets/nix with suppressed output
+# Extract the NIX (tar.gz) version to assets/nix without creating subdirectory
 echo "Extracting NIX version to assets/nix..."
-if tar -xzf "$NIX_FILE" -C assets/nix > /dev/null 2>&1; then
+if tar -xzf "$NIX_FILE" --strip-components=1 -C assets/nix > /dev/null 2>&1; then
 	echo "Successfully extracted NIX version to assets/nix"
 else
 	echo "Failed to extract NIX version"
