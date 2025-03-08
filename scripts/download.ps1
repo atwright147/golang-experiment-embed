@@ -32,10 +32,26 @@ if (-not (Test-Path $WINDOWS_FILE) -or (Get-Item $WINDOWS_FILE).Length -eq 0) {
 # Extract the WINDOWS (zip) version to assets/windows with suppressed output
 Write-Host "Extracting WINDOWS version to assets/windows..."
 try {
-    Expand-Archive -Path $WINDOWS_FILE -DestinationPath assets/windows -Force
+		Expand-Archive -Path $WINDOWS_FILE -DestinationPath assets/windows -Force
+		# Move the contents of the extracted folder to the destination path
+		$extractedFolder = Get-ChildItem -Path assets/windows | Where-Object { $_.PSIsContainer } | Select-Object -First 1
+		if ($extractedFolder) {
+			Move-Item -Path "$($extractedFolder.FullName)\*" -Destination "assets/windows" -Force
+			Remove-Item -Path $extractedFolder.FullName -Recurse -Force
+		}
     Write-Host "Successfully extracted WINDOWS version to assets/windows"
 } catch {
     Write-Host "Failed to extract WINDOWS version"
+    exit 1
+}
+
+# Rename exiftool(-k).exe to exiftool.exe
+Write-Host "Renaming exiftool(-k).exe to exiftool.exe..."
+try {
+    Rename-Item -Path "assets/windows/exiftool(-k).exe" -NewName "exiftool.exe" -Force
+    Write-Host "Successfully renamed exiftool(-k).exe to exiftool.exe"
+} catch {
+    Write-Host "Failed to rename exiftool(-k).exe to exiftool.exe"
     exit 1
 }
 
