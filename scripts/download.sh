@@ -49,18 +49,18 @@ if [ ! -s "$WINDOWS_FILE" ]; then
     exit 1
 fi
 
-# Extract the NIX (tar.gz) version to assets/nix
+# Extract the NIX (tar.gz) version to assets/nix with suppressed output
 echo "Extracting NIX version to assets/nix..."
-if tar -xzf "$NIX_FILE" -C assets/nix; then
+if tar -xzf "$NIX_FILE" -C assets/nix > /dev/null 2>&1; then
     echo "Successfully extracted NIX version to assets/nix"
 else
     echo "Failed to extract NIX version"
     exit 1
 fi
 
-# Extract the WINDOWS (zip) version to assets/windows
+# Extract the WINDOWS (zip) version to assets/windows with suppressed output
 echo "Extracting WINDOWS version to assets/windows..."
-if unzip -o "$WINDOWS_FILE" -d assets/windows; then
+if unzip -q -o "$WINDOWS_FILE" -d assets/windows > /dev/null 2>&1; then
     echo "Successfully extracted WINDOWS version to assets/windows"
 else
     echo "Failed to extract WINDOWS version"
