@@ -6,6 +6,8 @@ import (
 	"os/exec"
 )
 
+var exiftool_path string
+
 func main() {
 	// listExiftoolFiles()
 
@@ -13,6 +15,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to extract exiftool: %v", err)
 	}
+
+	exiftool_path = exiftoolPath
 
 	imagePath := "image.ARW" // Replace with your image path
 
