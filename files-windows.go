@@ -28,9 +28,15 @@ func listExiftoolFiles() {
 	}
 }
 
-func extractPlatformSpecificExiftool(tempDir string) (string, error) {
+func extractPlatformSpecificExiftool() (string, error) {
 	exiftoolName := "ExifTool.exe"
 	exiftoolFilesDir := "assets/windows" // Use forward slashes for embedded filesystem
+
+	// Create a temporary directory
+	tempDir, err := os.MkdirTemp("", "exiftool-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp directory: %v", err)
+	}
 
 	exiftoolPath := filepath.Join(tempDir, filepath.FromSlash(exiftoolFilesDir), exiftoolName)
 
@@ -46,7 +52,6 @@ func extractPlatformSpecificExiftool(tempDir string) (string, error) {
 		}
 
 		if d.IsDir() {
-			// fmt.Printf("Skipping directory: %s\n", path)
 			return nil
 		}
 

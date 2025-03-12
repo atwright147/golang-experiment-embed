@@ -34,15 +34,28 @@ func listExiftoolFiles() {
 	}
 }
 
-func extractPlatformSpecificExiftool(tempDir string) (string, error) {
+func extractPlatformSpecificExiftool() (string, error) {
 	exiftoolName := "exiftool"
 	exiftoolFilesDir := "assets/nix"
 
-	exiftoolPath := filepath.Join(tempDir, exiftoolFilesDir, exiftoolName)
+	tempDir, err := os.MkdirTemp("", "exiftool")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+
+	// Remove defer os.RemoveAll(tempDir) temporarily for debugging
+	fmt.Printf("Created temp dir: %s\n", tempDir)
 
 	exiftoolFilesFS, err := fs.Sub(exiftoolDarwinFS, exiftoolFilesDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to get exiftool_files sub FS: %v", err)
+	}
+
+	// List all files in the embedded filesystem for debugging
+	entries, _ := fs.ReadDir(exiftoolFilesFS, ".")
+	fmt.Println("Files in embedded FS:")
+	for _, entry := range entries {
+		fmt.Printf("- %s\n", entry.Name())
 	}
 
 	err = fs.WalkDir(exiftoolFilesFS, ".", func(path string, d fs.DirEntry, err error) error {
@@ -54,29 +67,49 @@ func extractPlatformSpecificExiftool(tempDir string) (string, error) {
 			return nil
 		}
 
-		destPath := filepath.Join(tempDir, exiftoolFilesDir, path)
+		// Extract directly to tempDir if it's the exiftool binary
+		var destPath string
+		if filepath.Base(path) == exiftoolName {
+			destPath = filepath.Join(tempDir, exiftoolName)
+		} else {
+			destPath = filepath.Join(tempDir, path)
+		}
+
+		fmt.Printf("Extracting %s to %s\n", path, destPath)
+
 		destDir := filepath.Dir(destPath)
 		if _, err := os.Stat(destDir); os.IsNotExist(err) {
 			err = os.MkdirAll(destDir, 0755)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create directory %s: %v", destDir, err)
 			}
 		}
 
 		fileData, err := fs.ReadFile(exiftoolFilesFS, path)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read embedded file %s: %v", path, err)
 		}
 
-		return os.WriteFile(destPath, fileData, 0644)
+		err = os.WriteFile(destPath, fileData, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to write file %s: %v", destPath, err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to extract exiftool_files: %v", err)
 	}
 
+	exiftoolPath := filepath.Join(tempDir, exiftoolName)
 	err = os.Chmod(exiftoolPath, 0755)
 	if err != nil {
 		return "", fmt.Errorf("failed to make exiftool executable: %v", err)
+	}
+
+	// Verify the file exists
+	if _, err := os.Stat(exiftoolPath); os.IsNotExist(err) {
+		return "", fmt.Errorf("exiftool binary not found at %s", exiftoolPath)
 	}
 
 	return exiftoolPath, nil
